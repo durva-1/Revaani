@@ -1,4 +1,6 @@
-def __init__(self):
+class DialectDetector:
+
+    def __init__(self):
         self.accent = "Unknown"
 
     def detect_accent(self, region):
