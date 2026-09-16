@@ -1,4 +1,6 @@
- def __init__(self, audio_file, duration):
+class VoiceInput:
+
+    def __init__(self, audio_file, duration):
         self.audio_file = audio_file
         self.duration = duration
         self.is_recording = False
