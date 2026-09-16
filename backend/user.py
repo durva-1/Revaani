@@ -1,4 +1,6 @@
-def __init__(self, email, full_name, region, age_group, gender="Not specified"):
+class User:
+
+    def __init__(self, email, full_name, region, age_group, gender="Not specified"):
         self.email = email
         self.full_name = full_name
         self.region = region
