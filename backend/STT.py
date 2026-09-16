@@ -1,4 +1,6 @@
-def __init__(self):
+class SpeechToText:
+
+    def __init__(self):
         self.language = "Gujarati"
 
     def transcribe(self, audio_file):
