@@ -9,7 +9,7 @@ class DialectDetector:
         elif region == "Surat":
             self.accent = "Surti Gujarati"
         elif region == "Saurashtra":
-            self.accent = "Saurashtrian Gujarati"
+            self.accent = "Kathiawadi Gujarati"
         else:
             self.accent = "Gujarati"
 
