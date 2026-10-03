@@ -46,3 +46,8 @@ def get_recordings_collection():
     """Get recordings collection"""
     db = get_database()
     return db["recordings"]
+
+def get_dataset_exports_collection():
+    """Get dataset exports collection"""
+    db = get_database()
+    return db["dataset_exports"]

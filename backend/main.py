@@ -7,7 +7,7 @@ import hashlib
 import secrets
 import os
 from dotenv import load_dotenv
-from database import get_users_collection, get_conversations_collection
+from database import get_users_collection, get_conversations_collection, get_recordings_collection
 from google.genai import types
 import google.genai as genai
 
@@ -63,6 +63,31 @@ class ChatMessage(BaseModel):
     text: str
     language: str = "gujarati"
 
+class DatasetSentence(BaseModel):
+    """Gujarati sentence for dataset contribution"""
+    sentence_id: str
+    gujarati_text: str
+    english_translation: str
+    difficulty: str  # easy, medium, hard
+
+class RecordingMetadata(BaseModel):
+    """Recording metadata submission"""
+    user_id: str
+    sentence_id: str
+    region: str  # e.g., "Ahmedabad", "Surat"
+    age_group: str  # e.g., "18-25", "25-35"
+    gender: str  # e.g., "male", "female", "other"
+    accent: str  # optional
+    duration_seconds: float  # audio length
+    audio_quality_score: float  # 0.0 to 1.0
+
+class RecordingResponse(BaseModel):
+    """Recording response"""
+    recording_id: str
+    user_id: str
+    status: str
+    created_at: str
+
 class ChatResponse(BaseModel):
     """Chat response"""
     user_message: str
@@ -105,6 +130,40 @@ def get_gemini_response(user_message: str) -> str:
     
     except Exception as e:
         return f"Sorry, I encountered an error: {str(e)}"
+
+# Sample Gujarati sentences for dataset collection
+GUJARATI_SENTENCES = [
+    {
+        "sentence_id": "sent_001",
+        "gujarati_text": "નમસ્તે, આપ કેવા છો?",
+        "english_translation": "Hello, how are you?",
+        "difficulty": "easy"
+    },
+    {
+        "sentence_id": "sent_002",
+        "gujarati_text": "આજ બહુ સુંદર દિવસ છે.",
+        "english_translation": "Today is a beautiful day.",
+        "difficulty": "easy"
+    },
+    {
+        "sentence_id": "sent_003",
+        "gujarati_text": "હું ગુજરાતી શીખી રહ્યો છું.",
+        "english_translation": "I am learning Gujarati.",
+        "difficulty": "medium"
+    },
+    {
+        "sentence_id": "sent_004",
+        "gujarati_text": "આપનું નામ શું છે?",
+        "english_translation": "What is your name?",
+        "difficulty": "easy"
+    },
+    {
+        "sentence_id": "sent_005",
+        "gujarati_text": "આ ડેટાસેટ ભાષા સંશોધન માટે મહત્વપૂર્ણ છે.",
+        "english_translation": "This dataset is important for language research.",
+        "difficulty": "hard"
+    }
+]
 
 # ===================== AUTHENTICATION ROUTES =====================
 
@@ -313,6 +372,132 @@ def get_conversation(user_id: str, conversation_id: str):
         "user_id": user_id,
         "message_count": len(messages),
         "messages": messages
+    }
+
+# ===================== DATASET ROUTES =====================
+
+@app.get("/dataset/sentences")
+def get_dataset_sentences():
+    """
+    Get list of Gujarati sentences for dataset contribution.
+    
+    Users read these sentences and record themselves.
+    Returns: List of sentences with translations
+    """
+    return {
+        "total_sentences": len(GUJARATI_SENTENCES),
+        "sentences": GUJARATI_SENTENCES
+    }
+
+@app.post("/dataset/recordings", response_model=RecordingResponse)
+def submit_recording(recording: RecordingMetadata):
+    """
+    Submit a speech recording to the dataset.
+    
+    Takes: user_id, sentence_id, region, age_group, gender, duration, quality_score
+    Returns: recording_id, status, created_at
+    """
+    
+    users_collection = get_users_collection()
+    recordings_collection = get_recordings_collection()
+    
+    # Check if user exists
+    user = users_collection.find_one({"user_id": recording.user_id})
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+    
+    # Check if sentence exists
+    sentence = next((s for s in GUJARATI_SENTENCES if s["sentence_id"] == recording.sentence_id), None)
+    if not sentence:
+        raise HTTPException(
+            status_code=404,
+            detail="Sentence not found"
+        )
+    
+    # Create recording document
+    recording_id = generate_user_id()
+    recording_data = {
+        "recording_id": recording_id,
+        "user_id": recording.user_id,
+        "sentence_id": recording.sentence_id,
+        "gujarati_text": sentence["gujarati_text"],
+        "region": recording.region,
+        "age_group": recording.age_group,
+        "gender": recording.gender,
+        "accent": recording.accent if recording.accent else "Not specified",
+        "duration_seconds": recording.duration_seconds,
+        "audio_quality_score": recording.audio_quality_score,
+        "status": "pending",  # pending → approved by admin
+        "created_at": datetime.now().isoformat(),
+        "admin_notes": ""
+    }
+    
+    # Save to MongoDB
+    recordings_collection.insert_one(recording_data)
+    
+    return {
+        "recording_id": recording_id,
+        "user_id": recording.user_id,
+        "status": "pending",
+        "created_at": recording_data["created_at"]
+    }
+
+@app.get("/dataset/my-contributions/{user_id}")
+def get_my_contributions(user_id: str):
+    """
+    Get all recordings submitted by a user.
+    
+    Takes: user_id
+    Returns: List of user's recordings
+    """
+    
+    users_collection = get_users_collection()
+    recordings_collection = get_recordings_collection()
+    
+    # Check if user exists
+    user = users_collection.find_one({"user_id": user_id})
+    if not user:
+        raise HTTPException(
+            status_code=404,
+            detail="User not found"
+        )
+    
+    # Get all recordings for this user
+    recordings = list(recordings_collection.find(
+        {"user_id": user_id},
+        {"_id": 0}
+    ).sort("created_at", -1))  # Most recent first
+    
+    return {
+        "user_id": user_id,
+        "total_contributions": len(recordings),
+        "recordings": recordings
+    }
+
+@app.get("/dataset/stats")
+def get_dataset_stats():
+    """
+    Get dataset collection statistics.
+    
+    Returns: Total recordings, pending, approved, by region, etc.
+    """
+    
+    recordings_collection = get_recordings_collection()
+    
+    # Count statistics
+    total = recordings_collection.count_documents({})
+    pending = recordings_collection.count_documents({"status": "pending"})
+    approved = recordings_collection.count_documents({"status": "approved"})
+    
+    return {
+        "total_recordings": total,
+        "pending_approval": pending,
+        "approved": approved,
+        "database_ready": True,
+        "message": "Dataset collection system is ready"
     }
 
 # ===================== RUN SERVER =====================
