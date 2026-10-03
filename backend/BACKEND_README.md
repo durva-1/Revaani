@@ -35,6 +35,26 @@ Go to: `http://localhost:8000/docs`
 - `POST /auth/login` — Login user
 - `GET /user/profile/{user_id}` — Get user profile
 
+## Current Status
+
+✅ Working Endpoints:
+- User authentication (register, login, profile)
+- Chat messaging with Gujarati responses
+- MongoDB database integration
+
+⏳ Coming Soon:
+- Real Gemini API integration
+- Dataset recording endpoints
+- Speech-to-text (Whisper)
+- Text-to-speech
+
+## Testing the API
+
+1. Register a user via `/auth/register`
+2. Use that user_id in `/chat/messages`
+3. Send Gujarati text, get Gujarati response
+4. Messages saved in MongoDB
+
 ## Database
 MongoDB Atlas (free tier, 512 MB storage)
 
