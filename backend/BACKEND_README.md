@@ -30,14 +30,28 @@ Go to: `http://localhost:8000/docs`
 
 ## API Endpoints
 
-- `GET /health` — Check if API is running
+### Authentication
 - `POST /auth/register` — Register new user
-- `POST /auth/login` — Login user
+- `POST /auth/login` — Login and get token
 - `GET /user/profile/{user_id}` — Get user profile
+
+### Chat
+- `POST /chat/messages` — Send message, get response
+- `GET /chat/conversations/{user_id}` — Get all conversations
+- `GET /chat/conversations/{user_id}/{conversation_id}` — Get specific chat
+
+### Dataset
+- `GET /dataset/sentences` — Get Gujarati sentences to read
+- `POST /dataset/recordings` — Submit speech recording
+- `GET /dataset/my-contributions/{user_id}` — Get user's contributions
+- `GET /dataset/stats` — Dataset collection statistics
+
+### System
+- `GET /health` — API health check
 
 ## Current Status
 
-✅ Working Endpoints:
+Working Endpoints:
 - User authentication (register, login, profile)
 - Chat messaging with Gujarati responses
 - MongoDB database integration
