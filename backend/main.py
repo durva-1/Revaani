@@ -1,4 +1,4 @@
-from fastapi import FastAPI, HTTPException, Depends, status
+from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
 from datetime import datetime, timedelta
@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from database import get_users_collection, get_conversations_collection, get_recordings_collection
 from google.genai import types
 import google.genai as genai
-
+import base64
 # Load environment variables
 load_dotenv()
 
@@ -390,19 +390,30 @@ def get_dataset_sentences():
     }
 
 @app.post("/dataset/recordings", response_model=RecordingResponse)
-def submit_recording(recording: RecordingMetadata):
+async def submit_recording(
+    user_id: str,
+    sentence_id: str,
+    region: str,
+    age_group: str,
+    gender: str,
+    accent: str,
+    duration_seconds: float,
+    audio_quality_score: float,
+    file: UploadFile = File(...)
+):
     """
-    Submit a speech recording to the dataset.
+    Submit a speech recording to the dataset with audio file.
     
-    Takes: user_id, sentence_id, region, age_group, gender, duration, quality_score
+    Takes: metadata (user_id, sentence_id, region, etc.) + audio file
     Returns: recording_id, status, created_at
     """
+    import base64
     
     users_collection = get_users_collection()
     recordings_collection = get_recordings_collection()
     
     # Check if user exists
-    user = users_collection.find_one({"user_id": recording.user_id})
+    user = users_collection.find_one({"user_id": user_id})
     if not user:
         raise HTTPException(
             status_code=404,
@@ -410,27 +421,34 @@ def submit_recording(recording: RecordingMetadata):
         )
     
     # Check if sentence exists
-    sentence = next((s for s in GUJARATI_SENTENCES if s["sentence_id"] == recording.sentence_id), None)
+    sentence = next((s for s in GUJARATI_SENTENCES if s["sentence_id"] == sentence_id), None)
     if not sentence:
         raise HTTPException(
             status_code=404,
             detail="Sentence not found"
         )
     
+    # Read and encode audio file
+    audio_content = await file.read()
+    audio_base64 = base64.b64encode(audio_content).decode('utf-8')
+    
     # Create recording document
     recording_id = generate_user_id()
     recording_data = {
         "recording_id": recording_id,
-        "user_id": recording.user_id,
-        "sentence_id": recording.sentence_id,
+        "user_id": user_id,
+        "sentence_id": sentence_id,
         "gujarati_text": sentence["gujarati_text"],
-        "region": recording.region,
-        "age_group": recording.age_group,
-        "gender": recording.gender,
-        "accent": recording.accent if recording.accent else "Not specified",
-        "duration_seconds": recording.duration_seconds,
-        "audio_quality_score": recording.audio_quality_score,
-        "status": "pending",  # pending → approved by admin
+        "region": region,
+        "age_group": age_group,
+        "gender": gender,
+        "accent": accent if accent else "Not specified",
+        "duration_seconds": duration_seconds,
+        "audio_quality_score": audio_quality_score,
+        "audio_file": audio_base64,  # ← Audio stored as base64
+        "file_name": file.filename,
+        "file_size_bytes": len(audio_content),
+        "status": "pending",
         "created_at": datetime.now().isoformat(),
         "admin_notes": ""
     }
@@ -440,7 +458,7 @@ def submit_recording(recording: RecordingMetadata):
     
     return {
         "recording_id": recording_id,
-        "user_id": recording.user_id,
+        "user_id": user_id,
         "status": "pending",
         "created_at": recording_data["created_at"]
     }
