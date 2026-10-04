@@ -1,3 +1,4 @@
+from fastapi.middleware.cors import CORSMiddleware
 from fastapi import FastAPI, HTTPException, Depends, status, UploadFile, File
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, EmailStr
@@ -25,10 +26,10 @@ app = FastAPI(
     version="1.0.0"
 )
 
-# Enable CORS
+# Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -265,47 +266,38 @@ def get_user_profile(user_id: str):
 
 # ===================== CHAT ROUTES =====================
 
-@app.post("/chat/messages", response_model=ChatResponse)
-def send_message(message: ChatMessage):
-    """
-    Send a chat message and get AI response.
-    
-    Takes: user_id, conversation_id, text, language
-    Returns: user message + AI response + timestamp
-    """
-    
-    conversations_collection = get_conversations_collection()
-    users_collection = get_users_collection()
-    
-    # Check if user exists
-    user = users_collection.find_one({"user_id": message.user_id})
-    if not user:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found"
-        )
-    
-    # Get AI response
-    ai_response = get_gemini_response(message.text)
-    
-    # Create message document
-    message_data = {
-        "user_id": message.user_id,
-        "conversation_id": message.conversation_id,
-        "user_message": message.text,
-        "ai_response": ai_response,
-        "timestamp": datetime.now().isoformat(),
-        "language": message.language
-    }
-    
-    # Save to MongoDB
-    conversations_collection.insert_one(message_data)
-    
-    return {
-        "user_message": message.text,
-        "ai_response": ai_response,
-        "timestamp": message_data["timestamp"]
-    }
+@app.post("/chat/messages")
+def send_message(message: dict):
+    """Send a message and get AI response"""
+    try:
+        user_id = message.get("user_id", "unknown")
+        conversation_id = message.get("conversation_id", "conv-001")
+        user_message = message.get("text", "")
+        language = message.get("language", "gu")
+
+        # Get AI response
+        ai_response = get_gemini_response(user_message)
+
+        # Save to MongoDB
+        conversations_collection = get_conversations_collection()
+        conversations_collection.insert_one({
+            "user_id": user_id,
+            "conversation_id": conversation_id,
+            "message": user_message,
+            "ai_response": ai_response,
+            "language": language,
+            "timestamp": datetime.utcnow()
+        })
+
+        return {
+            "user_message": user_message,
+            "ai_response": ai_response,
+            "timestamp": datetime.utcnow()
+        }
+    except Exception as e:
+        print(f"Error in send_message: {e}")
+        return {"error": str(e)}
+
 
 @app.get("/chat/conversations/{user_id}")
 def get_conversations(user_id: str):
