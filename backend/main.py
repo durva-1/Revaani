@@ -113,24 +113,19 @@ def generate_conversation_id() -> str:
     return secrets.token_hex(12)
 
 def get_gemini_response(user_message: str) -> str:
-    """
-    Get response from Gemini API.
-    For now using mock response - will integrate real Gemini later.
-    """
     try:
-        # Mock Gujarati response (temporary)
-        mock_responses = {
-            "હું કોણ છું?": "તમે એક વપરાશકર્તા છો જે ReVaani સાથે વાત કરી રહ્યા છો.",
-            "hello": "નમસ્તે! હું ReVaani છું. તમે કેવા છો?",
-            "default": "આ એક સરસ પ્રશ્ન છે! કૃપયા ફરીથી પ્રયાસ કરો."
-        }
+        import google.generativeai as genai
         
-        # Return mock response
-        return mock_responses.get(user_message, mock_responses["default"])
-    
+        api_key = os.getenv("GEMINI_API_KEY")
+        genai.configure(api_key=api_key)
+        model = genai.GenerativeModel('gemini-3.5-flash-lite')
+        
+        response = model.generate_content(user_message)
+        
+        return response.text
     except Exception as e:
-        return f"Sorry, I encountered an error: {str(e)}"
-
+        print(f"Gemini API error: {e}")
+        return "માફ કરો, એક ભૂલ આવી. કૃપયા ફરીથી પ્રયાસ કરો."
 # Sample Gujarati sentences for dataset collection
 GUJARATI_SENTENCES = [
     {
