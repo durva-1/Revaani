@@ -16,7 +16,7 @@ pip install -r requirements.txt
 ```
 
 ### 3. Setup Environment
-- Copy `env.example` to `.env`
+- Copy `.env.example` to `.env`
 - Ask Asmi for the MongoDB connection URL and the Gemini API key
 - Replace the placeholder values in `.env` with the real values
 - Generate your own JWT secret by running this command, and paste the output as `JWT_SECRET`:
