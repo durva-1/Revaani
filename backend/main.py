@@ -29,7 +29,7 @@ app = FastAPI(
 # Enable CORS for frontend
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173", "http://localhost:3000"],
+    allow_origins=["http://localhost:5173", "http://localhost:3000", "http://localhost:8080"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -267,13 +267,16 @@ def get_user_profile(user_id: str):
 # ===================== CHAT ROUTES =====================
 
 @app.post("/chat/messages")
-def send_message(message: dict):
+def send_message(request: dict):
     """Send a message and get AI response"""
     try:
-        user_id = message.get("user_id", "unknown")
-        conversation_id = message.get("conversation_id", "conv-001")
-        user_message = message.get("text", "")
-        language = message.get("language", "gu")
+        user_id = request.get("user_id", "unknown")
+        conversation_id = request.get("conversation_id", "conv-001")
+        user_message = request.get("text", "")
+        language = request.get("language", "gu")
+
+        if not user_message:
+            return {"error": "No message provided"}
 
         # Get AI response
         ai_response = get_gemini_response(user_message)
@@ -292,11 +295,11 @@ def send_message(message: dict):
         return {
             "user_message": user_message,
             "ai_response": ai_response,
-            "timestamp": datetime.utcnow()
+            "timestamp": datetime.utcnow().isoformat()
         }
     except Exception as e:
         print(f"Error in send_message: {e}")
-        return {"error": str(e)}
+        return {"error": str(e), "ai_response": "Error processing request"}
 
 
 @app.get("/chat/conversations/{user_id}")

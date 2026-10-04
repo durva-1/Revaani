@@ -69,9 +69,9 @@ try:
     db.users.create_index("user_id", unique=True)
     print("   ✓ Created indexes for users collection")
     
-    # conversations collection indexes
+   # conversations collection indexes
     db.conversations.create_index("user_id")
-    db.conversations.create_index("conversation_id", unique=True)
+    db.conversations.create_index("conversation_id") 
     print("   ✓ Created indexes for conversations collection")
     
     # recordings collection indexes
