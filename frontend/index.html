@@ -1,414 +1,542 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="gu">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ReVaani - Gujarati AI Assistant</title>
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ReVaani</title>
+<style>
+* {
+    box-sizing: border-box;
+}
 
-        body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
-            background: #0f0f0f;
-            color: #ececec;
-            height: 100vh;
-        }
+body {
+    margin: 0;
+    font-family: "Segoe UI", "Nirmala UI", "Noto Sans Gujarati", Arial, sans-serif;
+    background: #ffffff;
+    color: #202123;
+}
 
-        .container {
-            display: flex;
-            flex-direction: column;
-            height: 100vh;
-            max-width: 900px;
-            margin: 0 auto;
-            background: #0f0f0f;
-        }
+#auth-screen {
+    display: none;
+    min-height: 100vh;
+    align-items: center;
+    justify-content: center;
+    background: #f7f7f8;
+}
 
-        .header {
-            padding: 20px 24px;
-            border-bottom: 1px solid #2a2a2a;
-            background: linear-gradient(135deg, #0a0a0a 0%, #1a1a1a 100%);
-        }
+.auth-box {
+    background: #ffffff;
+    width: 360px;
+    padding: 32px;
+    border-radius: 12px;
+    border: 1px solid #e5e5e5;
+}
 
-        .header-content {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
+.auth-box h1 {
+    margin: 0;
+    text-align: center;
+}
 
-        .logo {
-            font-size: 32px;
-        }
+.subtitle {
+    text-align: center;
+    color: #6b6c7b;
+    margin: 4px 0 20px 0;
+    font-size: 14px;
+}
 
-        .header h1 {
-            font-size: 24px;
-            font-weight: 700;
-            margin-bottom: 2px;
-            background: linear-gradient(135deg, #fff 0%, #ccc 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            background-clip: text;
-        }
+.auth-box input {
+    width: 100%;
+    padding: 10px 12px;
+    margin-bottom: 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    font-size: 15px;
+}
 
-        .header p {
-            font-size: 12px;
-            color: #888;
-            letter-spacing: 0.5px;
-        }
+.auth-box button {
+    width: 100%;
+    padding: 11px;
+    background: #202123;
+    color: #ffffff;
+    border: none;
+    border-radius: 8px;
+    font-size: 15px;
+    cursor: pointer;
+}
 
-        .chat-container {
-            flex: 1;
-            overflow-y: auto;
-            padding: 24px;
-            display: flex;
-            flex-direction: column;
-            gap: 12px;
-        }
+.register-only {
+    display: none;
+}
 
-        .empty-state {
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            height: 100%;
-            text-align: center;
-            color: #666;
-        }
+#auth-error {
+    color: #d93025;
+    font-size: 14px;
+    min-height: 18px;
+    margin: 10px 0 0 0;
+    text-align: center;
+}
 
-        .empty-state h2 {
-            font-size: 18px;
-            margin-bottom: 8px;
-            color: #ccc;
-        }
+.switch {
+    text-align: center;
+    font-size: 14px;
+    margin: 12px 0 0 0;
+}
 
-        .empty-state p {
-            font-size: 14px;
-            color: #666;
-        }
+.switch a {
+    color: #202123;
+    font-weight: bold;
+    cursor: pointer;
+}
 
-        .message {
-            display: flex;
-            margin-bottom: 4px;
-            animation: fadeIn 0.3s ease;
-        }
+#app-screen {
+    display: none;
+    height: 100vh;
+}
 
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-            to {
-                opacity: 1;
-            }
-        }
+.sidebar {
+    width: 270px;
+    background: #f7f7f8;
+    border-right: 1px solid #e5e5e5;
+    display: flex;
+    flex-direction: column;
+    padding: 12px;
+}
 
-        .message.user {
-            justify-content: flex-end;
-        }
+.new-chat {
+    padding: 10px;
+    background: #ffffff;
+    border: 1px solid #d1d5db;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 15px;
+    margin-bottom: 12px;
+}
 
-        .message.assistant {
-            justify-content: flex-start;
-        }
+#history-list {
+    flex: 1;
+    overflow-y: auto;
+}
 
-        .message-content {
-            padding: 10px 14px;
-            border-radius: 8px;
-            max-width: 65%;
-            word-wrap: break-word;
-            line-height: 1.4;
-            font-size: 15px;
-        }
+.history-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 9px 10px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 14px;
+}
 
-        .user .message-content {
-            background: #1a73e8;
-            color: white;
-        }
+.history-item:hover {
+    background: #ececf1;
+}
 
-        .assistant .message-content {
-            background: #2a2a2a;
-            color: #ececec;
-        }
+.history-item.active {
+    background: #e3e3e8;
+}
 
-        .input-area {
-            padding: 16px 24px;
-            border-top: 1px solid #2a2a2a;
-            background: #0a0a0a;
-            display: flex;
-            gap: 8px;
-        }
+.history-title {
+    flex: 1;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
 
-        .input-controls {
-            display: flex;
-            gap: 8px;
-            flex: 1;
-        }
+.delete-btn {
+    border: none;
+    background: none;
+    color: #8e8ea0;
+    font-size: 18px;
+    cursor: pointer;
+}
 
-        .message-input {
-            flex: 1;
-            padding: 11px 14px;
-            background: #2a2a2a;
-            border: 1px solid #2a2a2a;
-            border-radius: 6px;
-            color: #ececec;
-            font-size: 15px;
-            outline: none;
-            transition: border-color 0.2s;
-            font-family: inherit;
-        }
+.delete-btn:hover {
+    color: #d93025;
+}
 
-        .message-input:focus {
-            border-color: #1a73e8;
-        }
+.empty-history {
+    color: #8e8ea0;
+    font-size: 14px;
+    padding: 10px;
+}
 
-        .message-input::placeholder {
-            color: #666;
-        }
+.sidebar-footer {
+    border-top: 1px solid #e5e5e5;
+    padding-top: 12px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 14px;
+}
 
-        .message-input:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+.sidebar-footer button {
+    padding: 6px 12px;
+    border: 1px solid #d1d5db;
+    background: #ffffff;
+    border-radius: 6px;
+    cursor: pointer;
+}
 
-        .btn {
-            padding: 11px 20px;
-            background: #1a73e8;
-            color: white;
-            border: none;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 500;
-            font-size: 14px;
-            transition: background 0.2s;
-            font-family: inherit;
-        }
+.main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
 
-        .btn:hover:not(:disabled) {
-            background: #1765d0;
-        }
+#chat-box {
+    flex: 1;
+    overflow-y: auto;
+    padding: 24px;
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
 
-        .btn:disabled {
-            opacity: 0.5;
-            cursor: not-allowed;
-        }
+.message {
+    margin-bottom: 16px;
+    padding: 12px 16px;
+    border-radius: 14px;
+    max-width: 80%;
+    line-height: 1.6;
+    white-space: pre-wrap;
+}
 
-        .btn.voice {
-            background: #ea4335;
-            padding: 11px 16px;
-        }
+.message.user {
+    background: #202123;
+    color: #ffffff;
+    margin-left: auto;
+}
 
-        .btn.voice:hover:not(:disabled) {
-            background: #d33425;
-        }
+.message.assistant {
+    background: #f1f1f4;
+}
 
-        .btn.voice.recording {
-            background: #ff6b6b;
-            animation: pulse 1s infinite;
-        }
+.input-area {
+    display: flex;
+    gap: 10px;
+    padding: 16px 24px 24px 24px;
+    max-width: 800px;
+    width: 100%;
+    margin: 0 auto;
+}
 
-        @keyframes pulse {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.7; }
-        }
+.input-area input {
+    flex: 1;
+    padding: 12px 14px;
+    border: 1px solid #d1d5db;
+    border-radius: 10px;
+    font-size: 15px;
+}
 
-        .chat-container::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .chat-container::-webkit-scrollbar-track {
-            background: transparent;
-        }
-
-        .chat-container::-webkit-scrollbar-thumb {
-            background: #333;
-            border-radius: 4px;
-        }
-
-        .chat-container::-webkit-scrollbar-thumb:hover {
-            background: #444;
-        }
-
-        .typing {
-            color: #999;
-            font-style: italic;
-        }
-
-        .status {
-            font-size: 12px;
-            color: #888;
-            padding: 0 14px;
-            margin-top: 4px;
-        }
-    </style>
+.input-area button {
+    padding: 0 22px;
+    background: #202123;
+    color: #ffffff;
+    border: none;
+    border-radius: 10px;
+    font-size: 15px;
+    cursor: pointer;
+}
+</style>
 </head>
 <body>
-    <div class="container">
-        <div class="header">
-            <div class="header-content">
-                <div class="logo">🎤</div>
-                <div>
-                    <h1>ReVaani</h1>
-                    <p>Gujarati AI Assistant</p>
-                </div>
-            </div>
-        </div>
 
-        <div class="chat-container" id="chatContainer">
-            <div class="empty-state">
-                <h2>Start a conversation</h2>
-                <p>Type or speak in Gujarati</p>
-            </div>
-        </div>
+<div id="auth-screen">
+    <div class="auth-box">
+        <h1>ReVaani</h1>
+        <p class="subtitle">Gujarati AI voice assistant</p>
 
-        <div class="input-area">
-            <div class="input-controls">
-                <input 
-                    type="text" 
-                    id="messageInput" 
-                    class="message-input" 
-                    placeholder="Message ReVaani..."
-                    onkeypress="handleKeyPress(event)"
-                >
-                <button class="btn voice" id="voiceBtn" onclick="toggleVoiceRecording()">
-                    🎙️ Record
-                </button>
-            </div>
-            <button class="btn" id="sendBtn" onclick="sendMessage()">Send</button>
+        <input id="full-name" class="register-only" placeholder="Full name">
+        <input id="region" class="register-only" placeholder="Region (for example: Ahmedabad)">
+        <input id="email" type="email" placeholder="Email">
+        <input id="password" type="password" placeholder="Password (minimum 6 characters)" onkeypress="handleAuthKey(event)">
+
+        <button id="auth-button" onclick="submitAuth()">Login</button>
+        <p id="auth-error"></p>
+        <p class="switch">
+            <span id="switch-text">New to ReVaani?</span>
+            <a id="switch-link" onclick="toggleMode()">Create account</a>
+        </p>
+    </div>
+</div>
+
+<div id="app-screen">
+    <div class="sidebar">
+        <button class="new-chat" onclick="newChat()">+ New chat</button>
+        <div id="history-list"></div>
+        <div class="sidebar-footer">
+            <span id="user-name"></span>
+            <button onclick="logout()">Logout</button>
         </div>
     </div>
 
-    <script>
-        const API_BASE = 'http://localhost:8000';
-        let messages = [];
-        let isRecording = false;
-        let mediaRecorder = null;
-        let audioChunks = [];
-        const userId = 'user-' + Math.random().toString(36).substr(2, 9);
-        const conversationId = 'conv-' + Date.now();
+    <div class="main">
+        <div id="chat-box"></div>
+        <div class="input-area">
+            <input id="message-input" placeholder="ગુજરાતીમાં લખો..." onkeypress="handleKeyPress(event)">
+            <button onclick="sendMessage()">Send</button>
+        </div>
+    </div>
+</div>
 
-        // Initialize
-        async function init() {
-            console.log('ReVaani initialized');
-        }
+<script>
+const API = "http://localhost:8000";
+let token = localStorage.getItem("token");
+let conversationId = null;
+let registerMode = false;
 
-        // Add message to UI
-        function addMessage(role, text) {
-            const container = document.getElementById('chatContainer');
-            
-            // Remove empty state if first message
-            if (messages.length === 0) {
-                container.innerHTML = '';
-            }
+function showAuth() {
+    document.getElementById("auth-screen").style.display = "flex";
+    document.getElementById("app-screen").style.display = "none";
+}
 
-            messages.push({ role, text });
+function showApp() {
+    document.getElementById("auth-screen").style.display = "none";
+    document.getElementById("app-screen").style.display = "flex";
+    document.getElementById("user-name").textContent = localStorage.getItem("name");
+    newChat();
+}
 
-            const msgDiv = document.createElement('div');
-            msgDiv.className = `message ${role}`;
-            msgDiv.innerHTML = `<div class="message-content">${escapeHtml(text)}</div>`;
-            container.appendChild(msgDiv);
-            container.scrollTop = container.scrollHeight;
-        }
+function toggleMode() {
+    registerMode = !registerMode;
 
-        // Escape HTML to prevent injection
-        function escapeHtml(text) {
-            const div = document.createElement('div');
-            div.textContent = text;
-            return div.innerHTML;
-        }
+    const extras = document.getElementsByClassName("register-only");
+    for (let i = 0; i < extras.length; i++) {
+        extras[i].style.display = registerMode ? "block" : "none";
+    }
 
-        // Send text message
-        async function sendMessage() {
-            const input = document.getElementById('messageInput');
-            const text = input.value.trim();
+    document.getElementById("auth-button").textContent = registerMode ? "Create account" : "Login";
+    document.getElementById("switch-text").textContent = registerMode ? "Already have an account?" : "New to ReVaani?";
+    document.getElementById("switch-link").textContent = registerMode ? "Login" : "Create account";
+    document.getElementById("auth-error").textContent = "";
+}
 
-            if (!text) return;
+function handleAuthKey(event) {
+    if (event.key === "Enter") {
+        submitAuth();
+    }
+}
 
-            addMessage('user', text);
-            input.value = '';
+async function submitAuth() {
+    const email = document.getElementById("email").value.trim();
+    const password = document.getElementById("password").value;
+    const errorBox = document.getElementById("auth-error");
+    errorBox.textContent = "";
 
-            document.getElementById('sendBtn').disabled = true;
-            addMessage('assistant', 'Thinking...');
+    let url = API + "/auth/login";
+    let body = { email: email, password: password };
 
-            try {
-                const response = await fetch(`${API_BASE}/chat/messages`, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        user_id: userId,
-                        conversation_id: conversationId,
-                        text: text,
-                        language: 'gu'
-                    })
-                });
+    if (registerMode) {
+        url = API + "/auth/register";
+        body.full_name = document.getElementById("full-name").value.trim();
+        body.region = document.getElementById("region").value.trim();
+    }
 
-                if (!response.ok) throw new Error('API error');
-                const data = await response.json();
+    try {
+        const response = await fetch(url, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(body)
+        });
+        const data = await response.json();
 
-                // Remove "Thinking..." message
-                const container = document.getElementById('chatContainer');
-                container.removeChild(container.lastChild);
-
-                addMessage('assistant', data.ai_response);
-            } catch (error) {
-                console.error('Error:', error);
-                const container = document.getElementById('chatContainer');
-                container.removeChild(container.lastChild);
-                addMessage('assistant', 'Connection error. Please try again.');
-            } finally {
-                document.getElementById('sendBtn').disabled = false;
-            }
-        }
-
-        // Voice recording
-        async function toggleVoiceRecording() {
-            const voiceBtn = document.getElementById('voiceBtn');
-
-            if (!isRecording) {
-                // Start recording
-                try {
-                    const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-                    mediaRecorder = new MediaRecorder(stream);
-                    audioChunks = [];
-
-                    mediaRecorder.ondataavailable = (e) => audioChunks.push(e.data);
-                    mediaRecorder.onstop = processAudio;
-
-                    mediaRecorder.start();
-                    isRecording = true;
-                    voiceBtn.classList.add('recording');
-                    voiceBtn.textContent = '🎙️ Stop';
-                } catch (error) {
-                    alert('Microphone access denied');
-                }
+        if (!response.ok) {
+            if (typeof data.detail === "string") {
+                errorBox.textContent = data.detail;
             } else {
-                // Stop recording
-                mediaRecorder.stop();
-                isRecording = false;
-                voiceBtn.classList.remove('recording');
-                voiceBtn.textContent = '🎙️ Record';
+                errorBox.textContent = "Please check your details and try again";
             }
+            return;
         }
 
-        // Process recorded audio
-        async function processAudio() {
-            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
-            console.log('Audio recorded:', audioBlob.size, 'bytes');
+        token = data.token;
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("name", data.full_name);
+        document.getElementById("password").value = "";
+        showApp();
+    } catch (error) {
+        errorBox.textContent = "Cannot reach the server. Is the backend running?";
+    }
+}
 
-            // For now, just show a placeholder message
-            addMessage('user', '[Voice message sent]');
-            addMessage('assistant', 'Voice input coming soon! Send text for now.');
+function logout() {
+    localStorage.removeItem("token");
+    localStorage.removeItem("name");
+    token = null;
+    conversationId = null;
+    showAuth();
+}
+
+async function apiFetch(path, options) {
+    options = options || {};
+    options.headers = options.headers || {};
+    options.headers["Authorization"] = "Bearer " + token;
+
+    if (options.body) {
+        options.headers["Content-Type"] = "application/json";
+    }
+
+    const response = await fetch(API + path, options);
+
+    if (response.status === 401) {
+        logout();
+        throw new Error("Session expired");
+    }
+
+    return response;
+}
+
+function addMessage(role, text) {
+    const chatBox = document.getElementById("chat-box");
+    const div = document.createElement("div");
+    div.className = "message " + role;
+    div.textContent = text;
+    chatBox.appendChild(div);
+    chatBox.scrollTop = chatBox.scrollHeight;
+    return div;
+}
+
+function newChat() {
+    conversationId = null;
+    document.getElementById("chat-box").innerHTML = "";
+    addMessage("assistant", "નમસ્તે! હું ReVaani છું. હું તમારી કેવી રીતે મદદ કરી શકું?");
+    loadHistory();
+}
+
+async function loadHistory() {
+    const list = document.getElementById("history-list");
+    list.innerHTML = "";
+
+    try {
+        const response = await apiFetch("/chat/conversations");
+        const data = await response.json();
+
+        if (data.conversations.length === 0) {
+            const empty = document.createElement("div");
+            empty.className = "empty-history";
+            empty.textContent = "No chats yet";
+            list.appendChild(empty);
+            return;
         }
 
-        // Handle Enter key
-        function handleKeyPress(event) {
-            if (event.key === 'Enter' && !event.shiftKey) {
-                event.preventDefault();
-                sendMessage();
+        for (let i = 0; i < data.conversations.length; i++) {
+            const c = data.conversations[i];
+
+            const item = document.createElement("div");
+            item.className = "history-item";
+            if (c.conversation_id === conversationId) {
+                item.classList.add("active");
             }
+
+            const title = document.createElement("span");
+            title.className = "history-title";
+            title.textContent = c.title;
+            title.onclick = function () {
+                openConversation(c.conversation_id);
+            };
+
+            const deleteButton = document.createElement("button");
+            deleteButton.className = "delete-btn";
+            deleteButton.textContent = "×";
+            deleteButton.onclick = function () {
+                deleteConversation(c.conversation_id);
+            };
+
+            item.appendChild(title);
+            item.appendChild(deleteButton);
+            list.appendChild(item);
+        }
+    } catch (error) {
+        console.log("Could not load history", error);
+    }
+}
+
+async function openConversation(id) {
+    try {
+        const response = await apiFetch("/chat/conversations/" + id);
+        const data = await response.json();
+
+        conversationId = id;
+        document.getElementById("chat-box").innerHTML = "";
+
+        for (let i = 0; i < data.messages.length; i++) {
+            addMessage("user", data.messages[i].message);
+            addMessage("assistant", data.messages[i].ai_response);
         }
 
-        init();
-    </script>
+        loadHistory();
+    } catch (error) {
+        console.log("Could not open conversation", error);
+    }
+}
+
+async function deleteConversation(id) {
+    if (!confirm("Delete this chat?")) {
+        return;
+    }
+
+    try {
+        await apiFetch("/chat/conversations/" + id, { method: "DELETE" });
+
+        if (id === conversationId) {
+            newChat();
+        } else {
+            loadHistory();
+        }
+    } catch (error) {
+        console.log("Could not delete conversation", error);
+    }
+}
+
+function handleKeyPress(event) {
+    if (event.key === "Enter") {
+        sendMessage();
+    }
+}
+
+async function sendMessage() {
+    const input = document.getElementById("message-input");
+    const text = input.value.trim();
+
+    if (text === "") {
+        return;
+    }
+
+    input.value = "";
+    addMessage("user", text);
+    const waiting = addMessage("assistant", "...");
+
+    let body = { text: text, language: "gu" };
+    if (conversationId !== null) {
+        body.conversation_id = conversationId;
+    }
+
+    try {
+        const response = await apiFetch("/chat/messages", {
+            method: "POST",
+            body: JSON.stringify(body)
+        });
+        const data = await response.json();
+
+        if (!response.ok) {
+            waiting.textContent = "Something went wrong. Please try again.";
+            return;
+        }
+
+        waiting.textContent = data.ai_response;
+        conversationId = data.conversation_id;
+        loadHistory();
+    } catch (error) {
+        waiting.textContent = "Cannot reach the server.";
+    }
+}
+
+if (token) {
+    showApp();
+} else {
+    showAuth();
+}
+</script>
+
 </body>
 </html>
