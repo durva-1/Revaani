@@ -237,6 +237,19 @@ body {
     font-size: 15px;
     cursor: pointer;
 }
+.input-area .mic-button {
+    padding: 0 16px;
+    background: #ffffff;
+    color: #202123;
+    border: 1px solid #d1d5db;
+    font-size: 20px;
+}
+
+.input-area .mic-button.listening {
+    background: #d93025;
+    color: #ffffff;
+    border-color: #d93025;
+}
 </style>
 </head>
 <body>
@@ -273,8 +286,9 @@ body {
     <div class="main">
         <div id="chat-box"></div>
         <div class="input-area">
-            <input id="message-input" placeholder="ગુજરાતીમાં લખો..." onkeypress="handleKeyPress(event)">
-            <button onclick="sendMessage()">Send</button>
+           <input id="message-input" placeholder="ગુજરાતીમાં લખો..." onkeypress="handleKeyPress(event)">
+<button id="mic-button" class="mic-button" onclick="toggleMic()" title="Speak in Gujarati">🎤</button>
+<button onclick="sendMessage()">Send</button>
         </div>
     </div>
 </div>
@@ -530,6 +544,53 @@ async function sendMessage() {
         waiting.textContent = "Cannot reach the server.";
     }
 }
+let recognition = null;
+let isListening = false;
+
+function setupMic() {
+    const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+
+    if (!SpeechRecognition) {
+        document.getElementById("mic-button").style.display = "none";
+        return;
+    }
+
+    recognition = new SpeechRecognition();
+    recognition.lang = "gu-IN";
+    recognition.interimResults = false;
+    recognition.continuous = false;
+
+    recognition.onresult = function (event) {
+        const spokenText = event.results[0][0].transcript;
+        document.getElementById("message-input").value = spokenText;
+    };
+
+    recognition.onend = function () {
+        isListening = false;
+        document.getElementById("mic-button").classList.remove("listening");
+    };
+
+    recognition.onerror = function (event) {
+        isListening = false;
+        document.getElementById("mic-button").classList.remove("listening");
+        if (event.error === "not-allowed") {
+            alert("Please allow microphone access in your browser.");
+        }
+        console.log("Mic error:", event.error);
+    };
+}
+
+function toggleMic() {
+    if (isListening) {
+        recognition.stop();
+        return;
+    }
+    recognition.start();
+    isListening = true;
+    document.getElementById("mic-button").classList.add("listening");
+}
+
+setupMic();
 
 if (token) {
     showApp();
